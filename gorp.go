@@ -644,6 +644,7 @@ type SqlExecutor interface {
 	SelectStr(query string, args ...interface{}) (string, error)
 	SelectNullStr(query string, args ...interface{}) (sql.NullString, error)
 	SelectOne(holder interface{}, query string, args ...interface{}) error
+	QueryRows(query string, args ...interface{}) (*sql.Rows, error)
 	query(query string, args ...interface{}) (*sql.Rows, error)
 	queryRow(query string, args ...interface{}) *sql.Row
 }
@@ -1159,6 +1160,11 @@ func (m *DbMap) queryRow(query string, args ...interface{}) *sql.Row {
 	return m.Db.QueryRow(query, args...)
 }
 
+// QueryRows behaves like an database/sql.Query.
+func (m *DbMap) QueryRows(query string, args ...interface{}) (*sql.Rows, error) {
+	return m.query(query, args...)
+}
+
 func (m *DbMap) query(query string, args ...interface{}) (*sql.Rows, error) {
 	m.trace(query, args...)
 	return m.Db.Query(query, args...)
@@ -1330,6 +1336,10 @@ func (t *Transaction) queryRow(query string, args ...interface{}) *sql.Row {
 	return t.tx.QueryRow(query, args...)
 }
 
+// QueryRows behaves like an database/sql.Query.
+func (t *Transaction) QueryRows(query string, args ...interface{}) (*sql.Rows, error) {
+	return t.query(query, args)
+}
 func (t *Transaction) query(query string, args ...interface{}) (*sql.Rows, error) {
 	t.dbmap.trace(query, args...)
 	return t.tx.Query(query, args...)
@@ -1736,7 +1746,6 @@ func rawselectmapcollection(m *DbMap, exec SqlExecutor, query string, args ...in
 
 	return list, nil
 }
-
 
 // maybeExpandNamedQuery checks the given arg to see if it's eligible to be used
 // as input to a named query.  If so, it rewrites the query to use
